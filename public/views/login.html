@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .login-form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-form h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="color"] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Style the color picker to show the selected color */
+        .login-form input[type="color"] {
+            height: 60px;
+        }
+
+        .login-form button {
+            background-color: #00bfff;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .login-form .clear-button {
+            background-color: #cccccc;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-form">
+        <h1>Welcome 👋</h1>
+        <form action="" method="post">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" placeholder="Enter Username" required>
+
+            <label for="color">Color:</label>
+            <input type="color" id="color" name="color" value="#eb3232">
+
+            <button id="SubmitButton" type="button" onclick="">Submit</button>
+            <button id="resetButton" type="reset" class="clear-button">Clear</button>
+        </form>
+    </div>
+    <script>
+      var socket = io();
+      let clientId
+      socket.on("connect", () => {
+        clientId = socket.id
+      });
+      function getCookieValue(name) 
+      {
+        const regex = new RegExp(`(^| )${name}=([^;]+)`)
+        const match = document.cookie.match(regex)
+        if (match) {
+          return match[2]
+        }
+      }
+
+      $(document).ready(function(){
+        socket.id=getCookieValue("id")
+        if(getCookieValue("name")){
+          let userNameStr = getCookieValue("name").toString().replace("%20", " ")
+          $("#username").val(userNameStr)
+        }
+        if(getCookieValue("color")){
+          let retStr = "#"+getCookieValue("color").slice(3, 9)
+          $("#color").val(retStr)
+        }
+        $("#SubmitButton").click(updateClicked);
+        $("#resetButton").click(deleteAllCookies);
+      }); 
+      function updateClicked()
+      {
+        $.ajax({
+          url: "/newUser",
+          type: "POST",
+          data: {id:clientId,
+          name:$("#username").val(),
+          color:$("#color").val()           
+          },
+          success: function(data){
+            if(data.error)
+            {
+              alert("Error")
+            }
+            else
+            {
+              console.log(window.location)
+              window.location.replace(window.location+"game");
+            }
+          } ,     
+          dataType: "json"
+        });   
+        return false;
+      }
+      function deleteAllCookies() {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
+        location.reload();
+      }
+    </script>
+</body>
+</html>

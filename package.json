@@ -1,0 +1,15 @@
+{
+  "name": "team9webapp",
+  "version": "1.0.0",
+  "description": "Mission Vista CS4 Team 9 Chat Room",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jake Cason, Leif Moore, Kyle Chau",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
