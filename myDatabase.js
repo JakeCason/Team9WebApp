@@ -12,7 +12,7 @@ myDatabase.prototype.displayData = function() {
 }
 
 myDatabase.prototype.newUser = function(_data) {
-  this.data[dataIndex] = new Data(_data.id,_data.name,_data.color,true,100,100,0,"")
+  this.data[dataIndex] = new Data(_data.id,_data.name,_data.color,false,100,100,0,"")
 
   if(this.data[dataIndex]){
     dataIndex++
@@ -21,13 +21,32 @@ myDatabase.prototype.newUser = function(_data) {
   else return false
 }
 
+myDatabase.prototype.activateUser = function(_data) {
+  retBool=true
+  for (let i=0;i<this.data.length;i++) 
+  {
+    if (this.data[i] && this.data[i].ident == _data.id)
+    {
+      this.data[i].isActive=true
+      retBool=false
+    }
+  }
+  return (retBool)
+}
 
 myDatabase.prototype.removeUser = function(_data) {
-  console.log("Removing User")
-  for (let i=0;i<this.data.length;i++) {
-    if (this.data[i] && this.data[i].ident == _data.id)
-      delete(this.data[i])
-  }
+  this.data.forEach(user => {
+    console.log(user.ident+" | "+_data.id+" | "+user.isActive)
+    if(user.ident==_data.id)
+    {
+      console.log(user.ident+" | "+_data.id+" | "+user.isActive)
+      console.log("ID Match")
+      if(user.isActive)
+      {
+        user.isActive=false
+      }
+    }
+  });
   return
 }
 
@@ -37,17 +56,16 @@ myDatabase.prototype.returnAllUsers = function(_data) {
 }
 
 myDatabase.prototype.updatePos = function(_data) {
-  console.log("running")
-  console.log(_data)
+  let retVal = false
   this.data.forEach(element => {
-    if(element.ident==_data.id)
+    if(String(element.ident) == String(_data.id))
     {
       element.xpos=_data.xpos
       element.ypos=_data.ypos
-      return(true)
+      retVal=true
     }
-  });
-  return false
+  })
+  return(retVal)
 }
 
 myDatabase.prototype.postData = function(_data) {

@@ -8,26 +8,55 @@ let testx = 200;
 let testy = 200;
 let floor = "spruce"
 
+   //canvasApp level variables
+   var rotation = 0.0;
+   //var x = 50;       // xpos of space ship
+   //var y = 50;
+   var keyPressList = [];
+   var mouseX = 0;
+   var mouseY = 0;
+   var click = false;
+   var lastX=window.innerWidth/2;
+   var lastY=window.innerWidth/2;
+   var word = "";
+   var playcolor = $("#playercolor").val();
+   var room = 0;
+   var name = $("#playername").val();
+
 //////////////////////////////////////////////////////////////
 
 $(document).ready(function(){ 
    //Get Welcome message from server.
    socket.on('welcome', function(data) 
    {
-       $("#name").val(data.id);
+      $("#name").val(data.id);
        ident = data.id;
        name=ident;
        sendStr=""
        sendStr+=(ident+" has joined that chat")
        socket.emit('sayHello', {'message':sendStr});
    });
+   socket.id=getCookieValue("id")
    $("#sendButton").click(sendMessage);
    $("#comment").keydown( function( event ) 
    {
        
    });
    $("#createNewPlayer").click(createNewPlayer);
-
+   $.ajax({
+      url: "/activateUser",
+      type: "POST",
+      data: {
+         id:ident
+      },
+      success: function(data){
+          if (data.error)
+            console.log("Unable to activate")
+        } ,     
+      dataType: "json"
+    });
+    console.log("Socket ID: " + socket.id)
+    console.log("Ident: " + ident)
 });     
 
 
@@ -51,8 +80,25 @@ function sendMessage()
 }
 
 function recieveXY(x, y, comment, name, room, color){
-    //console.log("check4");
-    socket.emit('change', {"xval":x, "yval":y, "comment":comment, "id":ident, "name":name, "room":room, "color":color})
+   //console.log("check4");
+   socket.emit('change', {"xval":x, "yval":y, "comment":comment, "id":ident, "name":name, "room":room, "color":color})
+}
+
+function updatePosition(){
+   $.ajax({
+      url: "/updatePos",
+      type: "PUT",
+      data: {
+         id:ident,
+         xpos:lastX,
+         ypos:lastY
+      },
+      success: function(data){
+          if (data.error)
+            console.log("User Error")
+        } ,     
+      dataType: "json"
+    });   
 }
 
 function getCookieValue(name) 
@@ -149,20 +195,6 @@ theCanvas.addEventListener("click",onMouseClick,false);
    if (!context) {
       return;
    }
-   //canvasApp level variables
-   var rotation = 0.0;
-   //var x = 50;       // xpos of space ship
-   //var y = 50;
-   var keyPressList = [];
-   var mouseX = 0;
-   var mouseY = 0;
-   var click = false;
-   var lastX=window.innerWidth/2;
-   var lastY=window.innerWidth/2;
-   var word = "";
-   var playcolor = $("#playercolor").val();
-   var room = 0;
-   var name = $("#playername").val();
    
    gameLoop();
 ///////////////////////////////////////////////////////
@@ -175,6 +207,7 @@ theCanvas.addEventListener("click",onMouseClick,false);
         input();
         paint();
         animate();
+        updatePosition();
         window.setTimeout(gameLoop, intervalTime);
    }
 
@@ -199,32 +232,24 @@ theCanvas.addEventListener("click",onMouseClick,false);
    function input()
    {
        if (keyPressList[38]==true){
-         //Up arrow
-         console.log("Up")
-         
+         //Up arrow         
          lastY-=5;
-         socket.emit('updatePos', {'id':ident,'xpos':lastX,'ypos':lastY});
        }
        if (keyPressList[37]==true) {
          //Left arrow
-         socket.emit('updatePos', {'id':ident,'xpos':lastX,'ypos':lastY});
          lastX-=5;
       }
       if (keyPressList[39]==true){
-         console.log("Right")
          //Right arrow
-         socket.emit('updatePos', {'id':ident,'xpos':lastX,'ypos':lastY});
          lastX+=5;
       }
       if(keyPressList[40] == true)
       {
-         socket.emit('updatePos', {'id':ident,'xpos':lastX,'ypos':lastY});
          lastY+=5;
       }
 
        if(keyPressList[13] == true)
         {
-         console.log("Way")
           word = $("#comment").val();
           name = $("#playername").val();
           //$("#comment").val("");
@@ -233,9 +258,6 @@ theCanvas.addEventListener("click",onMouseClick,false);
             recieveXY(lastX, lastY, word, name, room, playcolor);
          }
         }
-
-      
-
    }
 
    function paint()
@@ -247,9 +269,9 @@ theCanvas.addEventListener("click",onMouseClick,false);
       //let shrunken = document.getElementById("url('downloads/images/shrunkenTower.jpg')");
       //shrunken.style.backgroundPosition = "center";
       //document.body.style.backgroundSize = window.innerWidth+"px "+ window.innerHeight+"px"
-      //document.body.style.backgroundSize = "80px 80px"
+      document.body.style.backgroundSize = "80px 80px"
       //document.body.style.backgroundImage = "url(downloads/images/"+floor+".png)";
-      //document.body.style.backgroundImage = "url('https://resources.finalsite.net/images/f_auto,q_auto,t_image_size_2/v1691771346/vistausdorg/brifbeifpyomfk17bntk/classof2024-logo.png')";
+      document.body.style.backgroundImage = "url('https://ih0.redbubble.net/image.4945968103.7727/raf,360x360,075,t,fafafa:ca443f4786.jpg')";
       
    
       //GROUP 9
@@ -268,25 +290,24 @@ theCanvas.addEventListener("click",onMouseClick,false);
       context.fillStyle = '#505050';
       context.fillRect(window.innerWidth-25,window.innerHeight-85,25,25);
 
-      drawRect(50, 50, rotation, 2, 2, playcolor)
-
-
-      context.fillStyle = '#ffffff';
-      context.fillText ("word", lastX-20, lastY-50); //message
-      
-      context.font = "50px Georgia";
       
       context.fillStyle = '#ffffff'; //top wall
       context.fillText ("Room " + room, 30, 30);
       for(let i=0; i<users.length;i++)
       {
-         if(users[i].roomNum==room)
+         if(users[i].isActive)
+         {
             drawRect(users[i].xpos, users[i].ypos, rotation, 2, 2, users[i].color)
+            context.fillStyle = '#ffffff';
+            context.font = "30px Segoe UI";
+            context.fillText ("|"+users[i].isActive+"|", users[i].xpos, users[i].ypos); //message
+            context.fillText (users[i].name, users[i].xpos-50, users[i].ypos-65);
+         }
       }
       context.fillStyle = '#505050'; //top wall
       context.font = "20px Courier New";
       context.fillStyle = '#ffffff';
-      context.fillText (name, lastX-name.length*6, lastY+45) //username
+      //context.fillText (name, lastX-name.length*6, lastY+45) //username
    }
    function drawRect(xpos,ypos,rot,xscale,yscale, color)
    {
