@@ -6,22 +6,28 @@ var idnum = null;
 let Users=[]
 let testx = 200;
 let testy = 200;
-let floor = "spruce"
+let floor = ""
+//spruce
 
-   //canvasApp level variables
-   var rotation = 0.0;
-   //var x = 50;       // xpos of space ship
-   //var y = 50;
-   var keyPressList = [];
-   var mouseX = 0;
-   var mouseY = 0;
-   var click = false;
-   var lastX=window.innerWidth/2;
-   var lastY=window.innerWidth/2;
-   var word = "";
-   var playcolor = $("#playercolor").val();
-   var room = 0;
-   var name = $("#playername").val();
+//canvasApp level variables
+var rotation = 0.0;
+//var x = 50;       // xpos of space ship
+//var y = 50;
+var keyPressList = [];
+var mouseX = 0;
+var mouseY = 0;
+var click = false;
+var lastX=window.innerWidth/2;
+var lastY=window.innerWidth/2;
+var word = "";
+var playcolor = $("#playercolor").val();
+var room = 0;
+var name = $("#playername").val();
+
+var word = "";
+let fps = 60 
+var framecount = 0;
+var users = [];
 
 //////////////////////////////////////////////////////////////
 
@@ -66,6 +72,15 @@ socket.on('updateUsers', (data) => {
    users=data.users
 });
 
+socket.on('disconnectID', function(data){
+   console.log("HELLO")
+   
+   socket.emit('discon', {"ident": ident})
+})
+
+
+
+
 //Get message from server.
 socket.on('update', (data) => {
     $("#messages").append('<li>'+ data.message + '</li>');
@@ -89,9 +104,11 @@ function updatePosition(){
       url: "/updatePos",
       type: "PUT",
       data: {
-         id:ident,
-         xpos:lastX,
-         ypos:lastY
+         'id':ident,
+         'xpos':lastX,
+         'ypos':lastY,
+         'message':word,
+         'roomNum':room
       },
       success: function(data){
           if (data.error)
@@ -100,6 +117,18 @@ function updatePosition(){
       dataType: "json"
     });   
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 function getCookieValue(name) 
 {
@@ -172,12 +201,6 @@ function createNewPlayer(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-var word = "";
-let fps = 60 
-var framecount = 0;
-var users = [];
-
-
 window.addEventListener('load', eventWindowLoaded, false);
 function eventWindowLoaded() {
    canvasApp();
@@ -208,6 +231,7 @@ theCanvas.addEventListener("click",onMouseClick,false);
         paint();
         animate();
         updatePosition();
+       
         window.setTimeout(gameLoop, intervalTime);
    }
 
@@ -270,8 +294,7 @@ theCanvas.addEventListener("click",onMouseClick,false);
       //shrunken.style.backgroundPosition = "center";
       //document.body.style.backgroundSize = window.innerWidth+"px "+ window.innerHeight+"px"
       document.body.style.backgroundSize = "80px 80px"
-      //document.body.style.backgroundImage = "url(downloads/images/"+floor+".png)";
-      document.body.style.backgroundImage = "url('https://ih0.redbubble.net/image.4945968103.7727/raf,360x360,075,t,fafafa:ca443f4786.jpg')";
+      document.body.style.backgroundImage = "url('images/"+floor+".png')";
       
    
       //GROUP 9
@@ -281,13 +304,20 @@ theCanvas.addEventListener("click",onMouseClick,false);
       context.font = '10px sans-serif';
       context.textBaseline = 'top';
 
+
       context.fillStyle = '#505050';
-      context.fillRect(0, 0, 25, 25);
-      context.fillStyle = '#505050';
-      context.fillRect(window.innerWidth-25, 0, 25, 25);
-      context.fillStyle = '#505050';
-      context.fillRect(0, window.innerHeight-85, 25, 25);
-      context.fillStyle = '#505050';
+      context.fillRect(0, 0, window.innerWidth/2-90, 25);
+      context.fillRect(0, 0, 25, window.innerHeight/2-110);
+
+      context.fillRect(window.innerWidth-25, 0, -window.innerWidth/2+90+25, 25);
+      context.fillRect(window.innerWidth-25, 0, 25, window.innerHeight/2-110);
+
+      context.fillRect(0, window.innerHeight-85,window.innerWidth/2-90, 25);
+      context.fillRect(0, window.innerHeight-85, 25, -window.innerHeight/2+90+45);
+
+      context.fillRect(window.innerWidth-25,window.innerHeight-85,-window.innerWidth/2+90+25,25);
+      context.fillRect(window.innerWidth-25,window.innerHeight-85,25, -window.innerHeight/2+90+45);
+
       context.fillRect(window.innerWidth-25,window.innerHeight-85,25,25);
 
       
@@ -295,13 +325,14 @@ theCanvas.addEventListener("click",onMouseClick,false);
       context.fillText ("Room " + room, 30, 30);
       for(let i=0; i<users.length;i++)
       {
-         if(users[i].isActive)
+         if(users[i].isActive && users[i].roomNum == room)
          {
             drawRect(users[i].xpos, users[i].ypos, rotation, 2, 2, users[i].color)
             context.fillStyle = '#ffffff';
             context.font = "30px Segoe UI";
-            context.fillText ("|"+users[i].isActive+"|", users[i].xpos, users[i].ypos); //message
+            //context.fillText ("|"+users[i].isActive+"|", users[i].xpos, users[i].ypos); //message
             context.fillText (users[i].name, users[i].xpos-50, users[i].ypos-65);
+            context.fillText (users[i].message, users[i].xpos-20, users[i].ypos);
          }
       }
       context.fillStyle = '#505050'; //top wall
@@ -325,9 +356,11 @@ theCanvas.addEventListener("click",onMouseClick,false);
       playcolor =$("#playercolor").val();
 
       if(room == 0){
-         floor = "spruce"
+         floor = "skulk"
+         //spruce
       }else if(room == 1){
-         floor = "brickstone"
+         floor = "lode"
+         //stoneBrick
          context.fillStyle = '#505050'; //top wall
          context.fillRect(0, 0, window.innerWidth, 25);
          context.fillStyle = '#505050'; //left wall
@@ -337,7 +370,8 @@ theCanvas.addEventListener("click",onMouseClick,false);
 
 
       }else if(room == 2){
-         floor = "blackstone"
+         floor = "stoneBlack"
+         //blackstone brick
          context.fillStyle = '#505050'; //top wall
          context.fillRect(0, 0, window.innerWidth, 25);
          context.fillStyle = '#505050'; //left wall
@@ -348,6 +382,7 @@ theCanvas.addEventListener("click",onMouseClick,false);
          
       }else if(room == 3){
          floor = "purp"
+         //purp
          context.fillStyle = '#505050'; //top wall
          context.fillRect(0, 0, window.innerWidth, 25);
          context.fillStyle = '#505050'; //right wall
@@ -357,7 +392,8 @@ theCanvas.addEventListener("click",onMouseClick,false);
 
          
       }else if(room == 4){
-         floor = "nether"
+         floor = "pris"
+         //nether
          context.fillStyle = '#505050'; //left wall
          context.fillRect(0, 0, 25, window.innerHeight);
          context.fillStyle = '#505050'; //right wall
@@ -368,7 +404,7 @@ theCanvas.addEventListener("click",onMouseClick,false);
 
       }
       {
-      if(lastX<=0 && room == 0)
+      if(lastX<=0 && room == 0 && lastY>window.innerHeight/3 && lastY<window.innerHeight*2/3)
       {
          room = 1;
          lastX = window.innerWidth-1;
