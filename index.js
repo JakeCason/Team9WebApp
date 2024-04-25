@@ -9,6 +9,8 @@ app.use(bodyParser.json());
 app.use('/js', express.static('./public/js'));
 app.use(routes);
 
+app.use('/', express.static('./public'));
+
 let http = require('http');
 let server = http.createServer(app);
 let io = require('socket.io')(server);
@@ -24,11 +26,21 @@ const pulse = setInterval(function(){
 io.sockets.on('connection', function(socket) {
     //console.log("A User Has Joined")
     //Disconnect Code Here
-
+    let recent = "";
     socket.on('disconnect', function(){
+        //to(socket.id)
+        io.emit('disconnectID', null);
+        
         console.log("User "+socket.id+" Has Disconnected")
         db.removeUser({id:socket.id})
-    })  
+    }) 
+    
+    socket.on('discon', function(data){
+        recent = data.ident;
+        console.log(recent + "HELLO");
+    })
+
+
 });
 io.on('sayHello', function(socket){
 console.log("hello")
@@ -62,7 +74,8 @@ app.post('/newUser', function(req, res){
 });
 
 app.put('/updatePos', function(req, res){
-    let goodUpload = db.updatePos({id:req.body.id,xpos:req.body.xpos,ypos:req.body.ypos})
+    let goodUpload = db.updatePos({'id':req.body.id,'xpos':req.body.xpos,'ypos':req.body.ypos,'roomNum':req.body.roomNum,'message':req.body.message})
+    
     if(goodUpload)
     {
         res.json({error:false});
