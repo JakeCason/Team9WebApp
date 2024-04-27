@@ -92,8 +92,9 @@
       $(document).ready(function(){
         socket.id=getCookieValue("id")
         if(getCookieValue("name")){
-          let userNameStr = getCookieValue("name").toString().replace("%20", " ")
-          $("#username").val(userNameStr)
+          let userNameStr = getCookieValue("name").toString()
+          let retStr = userNameStr.replace("%20", " ")
+          $("#username").val(retStr)
         }
         if(getCookieValue("color")){
           let retStr = "#"+getCookieValue("color").slice(3, 9)

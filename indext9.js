@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use('/js', express.static('./public/js'));
 app.use(routes);
 
-app.use('/', express.static('./public'));
+app.use('/', express.static('./public'));//JAKE WHY 
 
 let http = require('http');
 let server = http.createServer(app);
@@ -18,53 +18,32 @@ let io = require('socket.io')(server);
 let db = new myDatabase();
 const Data = require('./Data');
 
+
 const pulse = setInterval(function(){
     allUsers = db.returnAllUsers()
     io.emit('updateUsers', {"users":allUsers});
 }, 16);
 
 io.sockets.on('connection', function(socket) {
-    //console.log("A User Has Joined")
-    //Disconnect Code Here
-    let recent = "";
     socket.on('disconnect', function(){
-        //to(socket.id)
-        io.emit('disconnectID', null);
-        
-        console.log("User "+socket.id+" Has Disconnected")
+        console.log(socket.id+" is leaving")
         db.removeUser({id:socket.id})
-    }) 
-    
-    socket.on('discon', function(data){
-        recent = data.ident;
-        console.log(recent + "HELLO");
     })
-
-
-});
-io.on('sayHello', function(socket){
-console.log("hello")
-})
-
-io.sockets.on('updatePos', function(socket) {
-    res.json({error:true});
 });
 
 app.post('/activateUser', function(req, res){
-    console.log("activating User")
-    let state = db.activateUser({"id":req.body.id})
+    let state = db.activateUser({"oldID":req.body.oldID,"newID":req.body.newID})
+    res.cookie('id', req.body.newID);
     res.json({error:state});
 });
 
 app.post('/newUser', function(req, res){
     let user = db.newUser({"id":req.body.id,"name":req.body.name,"color":req.body.color})
-    console.log("User is: "+user)
     if (user)
     {
         res.cookie('id', req.body.id);
         res.cookie('name', req.body.name);
         res.cookie('color', req.body.color);
-        console.log("Redirecting")
         db.displayData()
         res.json({error:false,"serverIp":1});
     }
@@ -86,8 +65,5 @@ app.put('/updatePos', function(req, res){
     }
 });
 
-app.put('/update', function(req, res){
-    console.log("Calling Broken Code")
-});
 let port = process.env.PORT || 3009;
 server.listen(port);

@@ -8,7 +8,6 @@ let Data = function(ident,name,color,isActive=false,xpos,ypos,roomNum,message)
     this.ypos=ypos
     this.roomNum=roomNum
     this.message=message
-    
 }
 
 module.exports = Data;
