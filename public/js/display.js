@@ -291,17 +291,27 @@ theCanvas.addEventListener("click",onMouseClick,false);
 
       
       context.fillStyle = '#ffffff'; //top wall
+      context.font = "30px Segoe UI";
       context.fillText ("Room " + room, 30, 30);
-      for(let i=0; i<users.length;i++)
+      for (let i = 0; i < users.length; i++) 
       {
-         if(users[i].isActive && users[i].roomNum == room)
+         if (users[i].isActive && users[i].roomNum == room) 
          {
-            drawRect(users[i].xpos, users[i].ypos, rotation, 2, 2, users[i].color)
+            drawRect(users[i].xpos, users[i].ypos, rotation, 2, 2, users[i].color);
             context.fillStyle = '#ffffff';
-            context.font = "30px Segoe UI";
-            //context.fillText ("|"+users[i].isActive+"|", users[i].xpos, users[i].ypos); //message
-            context.fillText (users[i].name, users[i].xpos-50, users[i].ypos-65);
-            context.fillText (users[i].message, users[i].xpos-20, users[i].ypos);
+            context.font = "25px Segoe UI";
+
+            const userNameWidth = context.measureText(users[i].name).width;
+            const centerXUsername = users[i].xpos - userNameWidth / 2;
+
+            const messageWidth = context.measureText(users[i].message).width;
+            const centerXMessage = users[i].xpos - messageWidth / 2;
+
+            const usernameY = users[i].ypos - 65;
+            const messageY = usernameY - 20;
+
+            context.fillText(users[i].name, centerXUsername, usernameY);
+            context.fillText(users[i].message, centerXMessage, messageY);
          }
       }
       context.fillStyle = wallColor; //top wall
